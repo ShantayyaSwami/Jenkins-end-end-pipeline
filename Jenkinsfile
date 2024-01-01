@@ -219,14 +219,14 @@ pipeline{
                     success{
                         mail to: 'shantayyaswami4@gmail.com',
                         from: 'jenkinsadmin@gmail.com',
-                        subject: 'Jenkins pipeline for the job ${JOB_NAME} completed successfully'
-                        body: 'Check build logs at ${BUILD_URL}'
+                        subject: "Jenkins pipeline for the job ${JOB_NAME} completed successfully",
+                        body: "Check build logs at ${BUILD_URL}"
                     }
                     failure{
                         mail to: 'shantayyaswami4@gmail.com',
                         from: 'jenkinsadmin@gmail.com',
-                        subject: 'Jenkins pipeline is failed for the job ${JOB_NAME}'
-                        body: 'Check build logs at ${BUILD_URL}'
+                        subject: "Jenkins pipeline is failed for the job ${JOB_NAME}",
+                        body: "Check build logs at ${BUILD_URL}"
                     }
                 }
             }             
