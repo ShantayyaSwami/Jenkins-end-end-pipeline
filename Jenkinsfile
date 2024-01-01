@@ -135,7 +135,7 @@ pipeline{
                 }       
             }
          stage('Push maven artifact to Nexus'){
-            when { expression { false}}
+            when { expression { true}}
             steps{
                 container('jnlp'){
                         script {
@@ -175,7 +175,7 @@ pipeline{
                    }
                 }
             stage('Push maven artifact to nexus via curl'){
-            when { expression { true}}
+            when { expression { false}}
             steps{
                 container('curl'){
                     script{
