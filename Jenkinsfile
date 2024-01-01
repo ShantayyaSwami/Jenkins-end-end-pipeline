@@ -32,8 +32,8 @@ pipeline{
                 command:
                 - cat
                 tty: true
-              - name: kubectl
-                image: bitnami/kubectl
+              - name: kubectl-helm-cli
+                image: shantayya/kubectl-helm-cli:latest
                 command:
                 - cat
                 tty: true
@@ -76,13 +76,13 @@ pipeline{
                 container('jnlp'){
                     script{
                         sh 'echo "Cleaning workspace"'
-                        cleanWs()
+                        deleteDir()
                     }
                 }       
             }
         }
         stage('SCM Checkout'){
-            when { expression { false}}
+            when { expression { true}}
             steps{
                 container('git'){
                     git branch: 'master',
@@ -91,7 +91,7 @@ pipeline{
             }
         }
         stage('Build SW'){
-            when { expression { false}}
+            when { expression { true}}
             steps{
                 container('maven'){
                     sh 'mvn -Dmaven.test.failure.ignore=true package'
@@ -175,7 +175,7 @@ pipeline{
                    }
                 }
             stage('Push maven artifact to nexus via curl'){
-            when { expression { false}}
+            when { expression { true}}
             steps{
                 container('curl'){
                     script{
@@ -191,7 +191,7 @@ pipeline{
                 }       
             } 
             stage('Build Docker Image'){
-                when { expression { false}}
+                when { expression { true}}
                 steps{
                     container('docker'){
                         sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
@@ -209,7 +209,7 @@ pipeline{
             stage('Deploy Spring-petclinic to K8s Cluster'){
                 when { expression { true}}
                 steps{
-                    container('kubectl'){
+                    container('kubectl-helm-cli'){
                         withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kubeconfig', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
                                 sh "kubectl apply -f deployment.yaml" 
                             }
@@ -217,7 +217,16 @@ pipeline{
                     }
                 post{
                     success{
-                        sh 'echo "Deployment Success"'
+                        mail to: 'shantayyaswami4@gmail.com',
+                        from: 'jenkinsadmin@gmail.com',
+                        subject: 'Jenkins pipeline for the job ${JOB_NAME} completed successfully'
+                        body: 'Check build logs at ${BUILD_URL}'
+                    }
+                    failure{
+                        mail to: 'shantayyaswami4@gmail.com',
+                        from: 'jenkinsadmin@gmail.com',
+                        subject: 'Jenkins pipeline is failed for the job ${JOB_NAME}'
+                        body: 'Check build logs at ${BUILD_URL}'
                     }
                 }
             }             
