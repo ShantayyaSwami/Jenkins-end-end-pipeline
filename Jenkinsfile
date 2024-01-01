@@ -32,6 +32,11 @@ pipeline{
                 command:
                 - cat
                 tty: true
+              - name: kubectl
+                image: bitnami/kubectl
+                command:
+                - cat
+                tty: true
               - name: docker
                 image: docker:latest
                 command:
@@ -61,9 +66,23 @@ pipeline{
         IMAGE_NAME = "${DOCKERHUB_USERNAME}"+"/"+"${APP_NAME}"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
+    options{
+        buildDiscarder(logRotator(numToKeepStr: '2'))
+    }
     stages{
-        stage('SCM Checkout'){
+         stage('Clean Workspace'){
             when { expression { true}}
+            steps{
+                container('jnlp'){
+                    script{
+                        sh 'echo "Cleaning workspace"'
+                        cleanWs()
+                    }
+                }       
+            }
+        }
+        stage('SCM Checkout'){
+            when { expression { false}}
             steps{
                 container('git'){
                     git branch: 'master',
@@ -72,7 +91,7 @@ pipeline{
             }
         }
         stage('Build SW'){
-            when { expression { true}}
+            when { expression { false}}
             steps{
                 container('maven'){
                     sh 'mvn -Dmaven.test.failure.ignore=true package'
@@ -116,7 +135,7 @@ pipeline{
                 }       
             }
          stage('Push maven artifact to Nexus'){
-            when { expression { true}}
+            when { expression { false}}
             steps{
                 container('jnlp'){
                         script {
@@ -171,21 +190,36 @@ pipeline{
                    }
                 }       
             } 
-        stage('Build Docker Image'){
-            when { expression { true}}
-            steps{
-                container('docker'){
-                    sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
-                    sh " docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest"
-                    withCredentials([usernamePassword(credentialsId: 'docker-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                            sh "docker login -u $USER -p $PASS"
-                            sh "docker push $IMAGE_NAME:$IMAGE_TAG"
-                            sh "docker push $IMAGE_NAME:latest"
+            stage('Build Docker Image'){
+                when { expression { false}}
+                steps{
+                    container('docker'){
+                        sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
+                        sh " docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest"
+                        withCredentials([usernamePassword(credentialsId: 'docker-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                                sh "docker login -u $USER -p $PASS"
+                                sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+                                sh "docker push $IMAGE_NAME:latest"
+                            }
+                            sh "docker rmi $IMAGE_NAME:$IMAGE_TAG"
+                            sh "docker rmi $IMAGE_NAME:latest"
                         }
-                        sh "docker rmi $IMAGE_NAME:$IMAGE_TAG"
-                        sh "docker rmi $IMAGE_NAME:latest"
                     }
-                   }
-                }       
-            }          
-    }
+            }
+            stage('Deploy Spring-petclinic to K8s Cluster'){
+                when { expression { true}}
+                steps{
+                    container('kubectl'){
+                        withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kubeconfig', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                                sh "kubectl apply -f deployment.yaml" 
+                            }
+                        }
+                    }
+                post{
+                    success{
+                        sh 'echo "Deployment Success"'
+                    }
+                }
+            }             
+    }          
+}
