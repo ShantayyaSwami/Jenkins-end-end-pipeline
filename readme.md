@@ -215,7 +215,7 @@ $action $head $base
 
 ```
 withCredentials([string(credentialsId: 'TOKEN', variable: 'TOKEN')]) {
-    sh "curl -u shantayya:$TOKEN -X POST 'https://api.github.com/repos/shantayya/spring-petclinic/statuses/$SHA_ID' -H 'Accept: application/vnd.github.v3+json' -d '{\"state\": \"success\",\"context\": \"Maven Build\", \"description\": \"Jenkins\", \"target_url\": \"$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/console\"}' "
+    sh "curl -u shantayya:$TOKEN -X POST 'https://api.github.com/repos/shantayya/Jenkins-end-end-pipeline/statuses/$SHA_ID' -H 'Accept: application/vnd.github.v3+json' -d '{\"state\": \"success\",\"context\": \"Maven Build\", \"description\": \"Jenkins\", \"target_url\": \"$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/console\"}' "
 }
 ```
 In function form
@@ -223,7 +223,7 @@ In function form
 void sendStatus(String stage, String status) {
     container('curl') {
         withCredentials([string(credentialsId: 'TOKEN', variable: 'TOKEN')]) {
-            sh "curl -u shantayya:$TOKEN -X POST 'https://api.github.com/repos/shantayya/spring-petclinic/statuses/$SHA_ID' -H 'Accept: application/vnd.github.v3+json' -d '{\"state\": \"$status\",\"context\": \"$stage\", \"description\": \"Jenkins\", \"target_url\": \"$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/console\"}' "
+            sh "curl -u shantayya:$TOKEN -X POST 'https://api.github.com/repos/shantayya/Jenkins-end-end-pipeline/statuses/$SHA_ID' -H 'Accept: application/vnd.github.v3+json' -d '{\"state\": \"$status\",\"context\": \"$stage\", \"description\": \"Jenkins\", \"target_url\": \"$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/console\"}' "
         }
     }
 }
