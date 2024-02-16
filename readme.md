@@ -73,7 +73,7 @@ spec:
       storage: 1Gi
 ```
 
-## Pipeline Steps Snippets
+## Pipeline Steps
 
 ### Agent Template
 https://plugins.jenkins.io/kubernetes/
